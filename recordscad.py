@@ -20,11 +20,15 @@ Here's a typical workflow:
   python recordscad.py gen_gif -imgs my_model_imgs -gif creating_my_model.gif
 """
 import os
+import subprocess
 import os.path
 import zipfile
 import time
 import imageio
 import argparse
+
+def fileescape(f):
+  return "'" + f.replace("'", "'\\''") + "'"
 
 class Recorder:
   def __init__(self, **kwargs):
@@ -56,8 +60,13 @@ class Recorder:
           tf.write(zf.read(name))
         timestamp,_ = os.path.splitext(name)
         img_path = os.path.join(self.img_dir, "{}.png".format(timestamp))
-        os.system("{0} {1} -o {2} {3}".format( \
-          self.openscad_bin, self.tmp_file, img_path, self.openscad_args))
+        cmd = [
+          fileescape(self.openscad_bin),
+          fileescape(self.tmp_file),
+          '-o', fileescape(img_path),
+          self.openscad_args
+        ]
+        os.system(" ".join(cmd))
 
   def start_recording(self):
     print "Press ctrl-c to stop."

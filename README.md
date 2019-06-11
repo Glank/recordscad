@@ -28,4 +28,4 @@ Here's a typical workflow:
   python recordscad.py gen_gif -imgs my_model_imgs -gif creating_my_model.gif
 ~~~
 
-[Example](https://i.imgur.com/0C5qWTD.gifv)
+![Example](https://i.imgur.com/0C5qWTD.gifv)

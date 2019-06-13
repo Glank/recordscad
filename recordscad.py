@@ -24,10 +24,13 @@ import subprocess
 import os.path
 import zipfile
 import time
-import imageio
 import argparse
 import tempfile
 import shutil
+try:
+  import imageio
+except:
+  print "Warning - imageio not installed. Will be unable to generate gifs."
 
 def fileescape(f):
   return "'" + f.replace("'", "'\\''") + "'"

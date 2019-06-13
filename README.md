@@ -28,4 +28,14 @@ Here's a typical workflow:
   python recordscad.py gen_gif -imgs my_model_imgs -gif creating_my_model.gif
 ~~~
 
+## Example:
+
 ![Example](example.gif)
+
+## Install Notes:
+
+This tool has been tested on python version 2.7.10. It's not likely to work with
+python 3.
+
+This tool requires the python 'imageio' library in order to generate gifs,
+but will run without it. It can be found [here](https://pypi.org/project/imageio/).

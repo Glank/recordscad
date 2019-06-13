@@ -26,15 +26,17 @@ import zipfile
 import time
 import imageio
 import argparse
+import tempfile
+import shutil
 
 def fileescape(f):
   return "'" + f.replace("'", "'\\''") + "'"
 
 class Recorder:
   def __init__(self, **kwargs):
+    self.tmp_dir = kwargs.get('tmp_dir')
     self.watched_file = kwargs.get('watched_file', None)
     self.output_zip = kwargs.get('output_zip', None)
-    self.tmp_file = kwargs.get('tmp_file', None)
     self.img_dir = kwargs.get('img_dir', None)
     self.gif_file = kwargs.get('gif_file', None)
     self.openscad_bin = kwargs.get('openscad_bin', "openscad")
@@ -54,19 +56,23 @@ class Recorder:
         print newname
 
   def export_imgs(self):
+    tmp_file = os.path.join(self.tmp_dir, "tmp.scad")
     with zipfile.ZipFile(self.output_zip, 'r', zipfile.ZIP_DEFLATED) as zf:
       for name in zf.namelist():
-        with open(self.tmp_file, 'wb') as tf:
+        with open(tmp_file, 'wb') as tf:
           tf.write(zf.read(name))
         timestamp,_ = os.path.splitext(name)
         img_path = os.path.join(self.img_dir, "{}.png".format(timestamp))
-        cmd = [
+        tmp_img_path = os.path.join(self.tmp_dir, "{}.png".format(timestamp))
+        cmd = " ".join([
           fileescape(self.openscad_bin),
-          fileescape(self.tmp_file),
-          '-o', fileescape(img_path),
+          fileescape(tmp_file),
+          '-o', fileescape(tmp_img_path),
           self.openscad_args
-        ]
-        os.system(" ".join(cmd))
+        ])
+        print cmd
+        os.system(cmd)
+        shutil.move(tmp_img_path, img_path)
 
   def start_recording(self):
     print "Press ctrl-c to stop."
@@ -112,10 +118,6 @@ parser.add_argument('-imgs', nargs='?', metavar='image_dir', \
 parser.add_argument('-gif', nargs='?', metavar='gif', \
   help='The name of the gif file to generate from the images in -imgs. '+\
   'For example: \'making_of_my_model.gif\'')
-parser.add_argument('-tmp', nargs='?', metavar='temp_file', default='tmp.scad', \
-  help='The name of the temp file used to store the scad files while they\'re '+\
-  'being turned into images (gen_img). '+\
-  'Default: \'tmp.scad\'')
 parser.add_argument('-openscad_bin', nargs='?', metavar='openscad_bin', \
   default='openscad', \
   help='The path to the binary used to run the openscad command line tool to '+\
@@ -127,23 +129,27 @@ parser.add_argument('-openscad_args', nargs='?', metavar='openscad_args', \
   'Default: "-q --autocenter --colorscheme=\'Starnight\'"')
 args = vars(parser.parse_args())
 
-recorder_args = {
-  'watched_file': args['in'],
-  'output_zip': args['r'],
-  'tmp_file':  args['tmp'],
-  'img_dir': args['imgs'],
-  'gif_file': args['gif'],
-  'openscad_bin': args['openscad_bin'],
-  'openscad_args': args['openscad_args']
-}
-recorder = Recorder(**recorder_args)
+tmp_dir = tempfile.mkdtemp()
+try:
+  recorder_args = {
+    'tmp_dir': tmp_dir,
+    'watched_file': args['in'],
+    'output_zip': args['r'],
+    'img_dir': args['imgs'],
+    'gif_file': args['gif'],
+    'openscad_bin': args['openscad_bin'],
+    'openscad_args': args['openscad_args']
+  }
+  recorder = Recorder(**recorder_args)
 
-action = args['action']
-if action == 'record':
-  recorder.start_recording()
-elif action == 'ls':
-  recorder.print_copies()
-elif action == 'gen_imgs':
-  recorder.export_imgs()
-elif action == 'gen_gif':
-  recorder.generate_gif()
+  action = args['action']
+  if action == 'record':
+    recorder.start_recording()
+  elif action == 'ls':
+    recorder.print_copies()
+  elif action == 'gen_imgs':
+    recorder.export_imgs()
+  elif action == 'gen_gif':
+    recorder.generate_gif()
+finally:
+  shutil.rmtree(tmp_dir)

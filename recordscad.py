@@ -134,6 +134,13 @@ args = vars(parser.parse_args())
 
 tmp_dir = tempfile.mkdtemp()
 try:
+  # Verify args
+  if args['in'] is not None and not os.path.isfile(args['in']):
+    raise Exception("The file '"+args['in']+"' does not exist.")
+  if args['imgs'] is not None and not os.path.isdir(args['imgs']):
+    raise Exception("The directory '"+args['imgs']+"' does not exist.")
+
+  # Create recorder
   recorder_args = {
     'tmp_dir': tmp_dir,
     'watched_file': args['in'],
@@ -145,6 +152,7 @@ try:
   }
   recorder = Recorder(**recorder_args)
 
+  # Perform recorder action
   action = args['action']
   if action == 'record':
     recorder.start_recording()

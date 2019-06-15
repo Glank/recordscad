@@ -74,8 +74,12 @@ class Recorder:
           self.openscad_args
         ])
         print cmd
-        os.system(cmd)
-        shutil.move(tmp_img_path, img_path)
+        try:
+          os.system(cmd)
+          shutil.move(tmp_img_path, img_path)
+        except Exception as e:
+          print "Error:", e
+          pass
 
   def start_recording(self):
     print "Press ctrl-c to stop."
